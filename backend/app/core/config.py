@@ -31,10 +31,12 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL")
     @classmethod
     def _async_driver(cls, v: str) -> str:
-        # Accept the common postgres:// and postgresql:// forms given by hosting providers.
+        # Accept common PostgreSQL URLs from hosting providers.
         if v.startswith("postgres://"):
             v = "postgresql://" + v[len("postgres://"):]
         if v.startswith("postgresql://"):
+            # asyncpg uses `ssl`, while libpq URLs use `sslmode`.
+            v = v.replace("sslmode=", "ssl=")
             v = "postgresql+asyncpg://" + v[len("postgresql://"):]
         return v
 

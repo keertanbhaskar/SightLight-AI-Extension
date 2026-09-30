@@ -19,6 +19,15 @@ def test_database_url_gets_async_driver():
     assert make(DATABASE_URL="postgresql://u:p@h/db").DATABASE_URL.startswith("postgresql+asyncpg://")
 
 
+def test_database_url_converts_sslmode_for_asyncpg():
+    assert make(DATABASE_URL="postgres://u:p@h/db?sslmode=require").DATABASE_URL == (
+        "postgresql+asyncpg://u:p@h/db?ssl=require"
+    )
+    assert make(DATABASE_URL="postgresql://u:p@h/db?sslmode=require&connect_timeout=10").DATABASE_URL == (
+        "postgresql+asyncpg://u:p@h/db?ssl=require&connect_timeout=10"
+    )
+
+
 @pytest.mark.parametrize("secret", ["", "short", "change_me_to_a_secure_random_string", "dev_secret_change_in_production"])
 def test_production_rejects_weak_secrets(secret):
     with pytest.raises(ValueError):
