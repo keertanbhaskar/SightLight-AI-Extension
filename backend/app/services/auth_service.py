@@ -22,32 +22,42 @@ class AuthService:
     """Service for authentication operations."""
 
     @staticmethod
+    @staticmethod
     async def register_user(db: AsyncSession, user_data: UserRegister) -> User:
         """Register a new user."""
-        # Check if email already exists
-        result = await db.execute(select(User).filter(User.email == user_data.email))
-        existing_user = result.scalar_one_or_none()
+        try:
+            # Check if email already exists
+            result = await db.execute(
+                select(User).filter(User.email == user_data.email)
+            )
+            existing_user = result.scalar_one_or_none()
 
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Email already registered",
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Email already registered",
+                )
+
+            # Create new user
+            hashed_password = get_password_hash(user_data.password)
+
+            new_user = User(
+                name=user_data.name,
+                email=user_data.email,
+                password_hash=hashed_password,
             )
 
-        # Create new user
-        hashed_password = get_password_hash(user_data.password)
-        new_user = User(
-            name=user_data.name,
-            email=user_data.email,
-            password_hash=hashed_password,
-        )
+            db.add(new_user)
 
-        db.add(new_user)
-
-        try:
             await db.flush()
+
             db.add(UserSettings(user_id=new_user.id))
+
             await db.commit()
+
+            await db.refresh(new_user)
+
+            return new_user
 
         except IntegrityError:
             await db.rollback()
@@ -56,17 +66,16 @@ class AuthService:
                 detail="Email already registered",
             ) from None
 
-        except Exception:
-            logger.exception("Registration database error")
-            await db.rollback()
+        except HTTPException:
             raise
-        except Exception:
-            logger.exception("Registration database error")
-            await db.rollback()
-            raise
-        await db.refresh(new_user)
 
-        return new_user
+        except Exception as exc:
+            logger.exception(
+                "REGISTRATION ERROR: %s",
+                exc,
+            )
+            await db.rollback()
+            raise
 
     @staticmethod
     async def authenticate_user(db: AsyncSession, login_data: UserLogin) -> User:
