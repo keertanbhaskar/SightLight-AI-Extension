@@ -59,6 +59,11 @@ async def run_async_migrations() -> None:
     if "sslmode=" in database_url:
         database_url = database_url.replace("sslmode=require", "ssl=require")
 
+    if "channel_binding=" in database_url:
+        database_url = database_url.replace("&channel_binding=require", "")
+        database_url = database_url.replace("?channel_binding=require&", "?")
+        database_url = database_url.replace("?channel_binding=require", "")
+
     configuration["sqlalchemy.url"] = database_url
 
     connectable = async_engine_from_config(
