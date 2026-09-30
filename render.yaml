@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: sightlite-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        fromService:
+          name: sightlite-dashboard
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: RUN_MIGRATIONS
+        value: "1"
+      - key: FORWARDED_ALLOW_IPS
+        value: "*"
+
+  - type: web
+    name: sightlite-dashboard
+    runtime: static
+    buildCommand: cd apps/web && npm ci --no-audit --no-fund && npm run build
+    staticPublishPath: ./apps/web/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          name: sightlite-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
