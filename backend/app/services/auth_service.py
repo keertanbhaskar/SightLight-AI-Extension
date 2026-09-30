@@ -43,16 +43,23 @@ class AuthService:
         )
 
         db.add(new_user)
+
         try:
-            await db.flush()  # Flush to get the user ID
+            await db.flush()
             db.add(UserSettings(user_id=new_user.id))
             await db.commit()
+
         except IntegrityError:
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Email already registered",
             ) from None
+
+        except Exception:
+            logger.exception("Registration database error")
+            await db.rollback()
+            raise
         except Exception:
             logger.exception("Registration database error")
             await db.rollback()
