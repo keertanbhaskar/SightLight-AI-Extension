@@ -1,3 +1,6 @@
+import logging
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -45,9 +48,15 @@ class AuthService:
             db.add(UserSettings(user_id=new_user.id))
             await db.commit()
         except IntegrityError:
-            # Two simultaneous registrations passed the existence check; the unique index caught the loser.
             await db.rollback()
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered") from None
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email already registered",
+            ) from None
+        except Exception:
+            logger.exception("Registration database error")
+            await db.rollback()
+            raise
         await db.refresh(new_user)
 
         return new_user
