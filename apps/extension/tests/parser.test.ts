@@ -132,6 +132,35 @@ describe('search', () => {
       kind: 'click', target: 'home', role: 'button',
     });
   });
+  it('understands Spanish, French, and German commands offered by voice settings', () => {
+    expect(parseInstruction('haz clic en el botón de inicio').steps[0]).toMatchObject({
+      kind: 'click', target: 'home', role: 'button',
+    });
+    expect(parseInstruction('clique sur le bouton de connexion').steps[0]).toMatchObject({
+      kind: 'click', target: 'login', role: 'button',
+    });
+    expect(parseInstruction('klicke auf die Schaltfläche Anmelden').steps[0]).toMatchObject({
+      kind: 'click', target: 'login', role: 'button',
+    });
+
+    expect(parseInstruction('busca gatos en youtube').steps[0]).toMatchObject({ kind: 'navigate' });
+    expect(parseInstruction('recherche chats sur google').steps[0]).toMatchObject({ kind: 'navigate' });
+    expect(parseInstruction('suche nach wetter auf google').steps[0]).toMatchObject({ kind: 'navigate' });
+
+    expect(parseInstruction('desplaza la página hacia arriba').steps[0]).toMatchObject({ kind: 'scroll', direction: 'up' });
+    expect(parseInstruction('fais défiler la page vers le bas').steps[0]).toMatchObject({ kind: 'scroll', direction: 'down' });
+    expect(parseInstruction('scrolle die Seite nach oben').steps[0]).toMatchObject({ kind: 'scroll', direction: 'up' });
+
+    expect(parseInstruction('escribe gatos en el campo de búsqueda').steps[0]).toMatchObject({
+      kind: 'type', text: 'gatos', target: 'search',
+    });
+    expect(parseInstruction('tape bonjour dans le champ de recherche').steps[0]).toMatchObject({
+      kind: 'type', text: 'bonjour', target: 'search',
+    });
+    expect(parseInstruction('schreibe hallo in das Suchfeld').steps[0]).toMatchObject({
+      kind: 'type', text: 'hallo', target: 'search',
+    });
+  });
   it('opens web searches from Hindi and Kannada address-bar-style commands', () => {
     const hindi = parseInstruction('वेब पर मौसम आज खोजें').steps[0];
     const kannada = parseInstruction('ವೆಬ್‌ನಲ್ಲಿ ಕನ್ನಡ ಸುದ್ದಿ ಹುಡುಕಿ').steps[0];

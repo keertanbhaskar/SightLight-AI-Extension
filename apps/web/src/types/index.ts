@@ -96,7 +96,7 @@ export interface Action {
   target_confidence: number | null;
   perception_source: PerceptionSource | null;
   status: ActionStatus;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 }
 

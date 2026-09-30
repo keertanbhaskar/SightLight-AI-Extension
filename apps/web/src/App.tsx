@@ -1,19 +1,20 @@
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { AuthProvider } from '@/hooks/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
+import { settingsApi } from '@/api/settings';
+import { Theme } from '@/types';
 
-// Layouts
-import MainLayout from '@/layouts/MainLayout';
-
-// Pages
-import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import DashboardPage from '@/pages/DashboardPage';
-import TasksPage from '@/pages/TasksPage';
-import TaskDetailPage from '@/pages/TaskDetailPage';
-import AnalyticsPage from '@/pages/AnalyticsPage';
-import SettingsPage from '@/pages/SettingsPage';
-import ProfilePage from '@/pages/ProfilePage';
+const MainLayout = lazy(() => import('@/layouts/MainLayout'));
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const TasksPage = lazy(() => import('@/pages/TasksPage'));
+const TaskDetailPage = lazy(() => import('@/pages/TaskDetailPage'));
+const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,9 +63,34 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+function ThemeSync() {
+  const { isAuthenticated } = useAuth();
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: settingsApi.getSettings,
+    enabled: isAuthenticated,
+  });
+  const preference = settings?.theme ?? Theme.LIGHT;
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const applyTheme = () => {
+      const useDark = preference === Theme.DARK || (preference === Theme.SYSTEM && media.matches);
+      document.documentElement.dataset.theme = useDark ? 'dark' : 'light';
+    };
+
+    applyTheme();
+    media.addEventListener('change', applyTheme);
+    return () => media.removeEventListener('change', applyTheme);
+  }, [preference]);
+
+  return null;
+}
+
 function AppRoutes() {
   return (
-    <Routes>
+    <Suspense fallback={<div className="min-h-screen bg-dark-bg flex items-center justify-center text-dark-text">Loading...</div>}>
+      <Routes>
       {/* Public routes */}
       <Route
         path="/login"
@@ -103,7 +129,8 @@ function AppRoutes() {
 
       {/* 404 */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }
 
@@ -111,6 +138,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ThemeSync />
         <AppRoutes />
       </AuthProvider>
     </QueryClientProvider>

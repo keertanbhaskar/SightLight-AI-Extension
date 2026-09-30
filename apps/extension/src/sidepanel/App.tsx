@@ -18,6 +18,10 @@ export function App() {
   const fromVoice = useRef(false);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+  const queuedVoiceCommands = useRef<string[]>([]);
+  const processingVoiceCommand = useRef(false);
+  const voiceListening = useRef(false);
+  const runNextVoiceCommandRef = useRef<() => void>(() => {});
 
   const running = run ? ACTIVE.has(run.status) : false;
   const plan = useMemo(() => parseInstruction(instruction), [instruction]);
@@ -29,15 +33,34 @@ export function App() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
-      if (fromVoice.current) speak(msg, settingsRef.current.voiceLang);
+      if (fromVoice.current && !voiceListening.current) speak(msg, settingsRef.current.voiceLang);
+      if (processingVoiceCommand.current) {
+        processingVoiceCommand.current = false;
+        window.setTimeout(() => runNextVoiceCommandRef.current(), 0);
+      }
     }
   }, []);
 
+  const runNextVoiceCommand = useCallback(() => {
+    if (processingVoiceCommand.current || running || !settings.voiceAutoRun) return;
+    const next = queuedVoiceCommands.current.shift();
+    if (!next) return;
+    processingVoiceCommand.current = true;
+    void start(next);
+  }, [running, settings.voiceAutoRun, start]);
+  runNextVoiceCommandRef.current = runNextVoiceCommand;
+
   const voice = useVoice(settings.voiceLang, (text) => {
     fromVoice.current = true;
-    setInstruction(text);
-    if (settingsRef.current.voiceAutoRun && !running) void start(text);
+    if (settingsRef.current.voiceAutoRun) {
+      setInstruction(text);
+      queuedVoiceCommands.current.push(text);
+      runNextVoiceCommandRef.current();
+    } else {
+      setInstruction((current) => current.trim() ? `${current.trim()} then ${text}` : text);
+    }
   });
+  voiceListening.current = voice.state === 'listening';
 
   useEffect(() => {
     void call<Settings>({ type: 'settings/get' }).then(setSettings).catch(() => undefined);
@@ -56,11 +79,18 @@ export function App() {
   const lastSpoken = useRef<string>('');
   useEffect(() => {
     if (!run || !fromVoice.current || ACTIVE.has(run.status) || lastSpoken.current === run.id) return;
+    if (voice.state === 'listening') return;
     lastSpoken.current = run.id;
     speak(run.status === 'completed' ? 'Done.' : run.status === 'stopped' ? 'Stopped.' : `Failed. ${run.error ?? ''}`, settings.voiceLang);
-  }, [run, settings.voiceLang]);
+  }, [run, settings.voiceLang, voice.state]);
 
   useEffect(() => { if (run && !ACTIVE.has(run.status)) setConfirm(null); }, [run]);
+
+  useEffect(() => {
+    if (!run || ACTIVE.has(run.status)) return;
+    processingVoiceCommand.current = false;
+    runNextVoiceCommand();
+  }, [run, runNextVoiceCommand]);
 
   const answer = (approved: boolean) => {
     if (!confirm) return;
@@ -95,7 +125,6 @@ export function App() {
           <button
             className={`mic ${voice.state}`}
             onClick={voice.toggle}
-            disabled={running}
             aria-pressed={voice.state === 'listening'}
             aria-label={voice.state === 'listening' ? 'Stop listening' : 'Start voice command'}
             title="Voice command (Alt+Shift+V)"

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { getApiErrorMessage } from '@/api/client';
 import { LoginCredentials } from '@/types';
 
 const LoginPage = () => {
@@ -19,8 +20,8 @@ const LoginPage = () => {
     try {
       const credentials: LoginCredentials = { email, password };
       await login(credentials);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Invalid email or password');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Invalid email or password'));
     } finally {
       setIsLoading(false);
     }

@@ -17,6 +17,10 @@ export function useVoice(lang: string, onFinal: (text: string) => void) {
   const [interim, setInterim] = useState('');
   const [error, setError] = useState<{ kind: VoiceError; message: string } | null>(null);
   const recRef = useRef<Recognizer | null>(null);
+  const keepListening = useRef(false);
+  const restartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const langRef = useRef(lang);
+  langRef.current = lang;
   const finalRef = useRef(onFinal);
   finalRef.current = onFinal; // always call the latest handler without recreating the recognizer
 
@@ -25,14 +29,44 @@ export function useVoice(lang: string, onFinal: (text: string) => void) {
       onStart: () => { setState('listening'); setError(null); setInterim(''); },
       onInterim: setInterim,
       onFinal: (t) => { setInterim(''); finalRef.current(t); },
-      onError: (kind) => setError({ kind, message: MESSAGES[kind] }),
-      onEnd: () => { setState('idle'); setInterim(''); },
+      onError: (kind) => {
+        if (kind !== 'no-speech') keepListening.current = false;
+        setError({ kind, message: MESSAGES[kind] });
+      },
+      onEnd: () => {
+        setInterim('');
+        if (!keepListening.current) {
+          setState('idle');
+          return;
+        }
+        restartTimer.current = setTimeout(() => {
+          restartTimer.current = null;
+          if (keepListening.current) recRef.current?.start(langRef.current);
+        }, 250);
+      },
     });
-    return () => recRef.current?.abort();
+    return () => {
+      keepListening.current = false;
+      if (restartTimer.current) clearTimeout(restartTimer.current);
+      recRef.current?.abort();
+    };
   }, []);
 
-  const start = useCallback(() => { setError(null); recRef.current?.start(lang); }, [lang]);
-  const stop = useCallback(() => recRef.current?.stop(), []);
+  const start = useCallback(() => {
+    keepListening.current = true;
+    if (restartTimer.current) clearTimeout(restartTimer.current);
+    restartTimer.current = null;
+    setError(null);
+    recRef.current?.start(lang);
+  }, [lang]);
+  const stop = useCallback(() => {
+    keepListening.current = false;
+    if (restartTimer.current) clearTimeout(restartTimer.current);
+    restartTimer.current = null;
+    setState('idle');
+    setInterim('');
+    recRef.current?.stop();
+  }, []);
   const toggle = useCallback(() => (state === 'listening' ? stop() : start()), [state, start, stop]);
 
   const openPermissionPage = useCallback(() => {

@@ -21,11 +21,11 @@ export default {
           900: '#0c4a6e',
         },
         dark: {
-          bg: '#0a0a0a',
-          surface: '#121212',
-          border: '#1f1f1f',
-          text: '#e5e5e5',
-          muted: '#737373',
+          bg: 'rgb(var(--color-bg) / <alpha-value>)',
+          surface: 'rgb(var(--color-surface) / <alpha-value>)',
+          border: 'rgb(var(--color-border) / <alpha-value>)',
+          text: 'rgb(var(--color-text) / <alpha-value>)',
+          muted: 'rgb(var(--color-muted) / <alpha-value>)',
         }
       },
       fontFamily: {

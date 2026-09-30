@@ -26,7 +26,7 @@ class UserSettingsBase(BaseModel):
     max_steps: int = Field(20, ge=1, le=100)
     max_runtime: int = Field(120, ge=5, le=600)
     require_confirmation: bool = True
-    theme: Theme = Theme.DARK
+    theme: Theme = Theme.LIGHT
 
 
 class UserSettingsUpdate(BaseModel):

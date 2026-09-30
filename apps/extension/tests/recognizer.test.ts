@@ -24,12 +24,19 @@ afterEach(() => {
 describe('Recognizer', () => {
   it('streams interim text and delivers the final transcript once', () => {
     const { r, ev } = mk(); r.start('en-US');
+    expect(FakeRec.last.continuous).toBe(true);
     FakeRec.last.onresult!(result('click the log', false));
     FakeRec.last.onresult!(result('click the login button', true));
     FakeRec.last.onend!();
     expect(ev.onInterim).toHaveBeenCalledWith('click the log');
     expect(ev.onFinal).toHaveBeenCalledTimes(1);
     expect(ev.onFinal).toHaveBeenCalledWith('click the login button');
+  });
+  it('delivers multiple final utterances in one continuous session', () => {
+    const { r, ev } = mk(); r.start('en-US');
+    FakeRec.last.onresult!(result('go to youtube.com', true));
+    FakeRec.last.onresult!(result('search for cats', true));
+    expect(ev.onFinal.mock.calls.map(([text]) => text)).toEqual(['go to youtube.com', 'search for cats']);
   });
   it('salvages interim text when Chrome ends without a final result', () => {
     const { r, ev } = mk(); r.start('en-US');

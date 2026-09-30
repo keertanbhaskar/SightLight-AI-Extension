@@ -15,8 +15,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["chrome", "vite/client"],
-    "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] }
+    "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src", "tests", "scripts/*.d.ts", "vitest.config.ts"]
 }

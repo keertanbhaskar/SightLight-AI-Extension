@@ -29,7 +29,7 @@ class UserSettings(Base):
     max_steps = Column(Integer, default=15, nullable=False)
     max_runtime = Column(Integer, default=60, nullable=False)
     require_confirmation = Column(Boolean, default=True, nullable=False)
-    theme = Column(SQLEnum(Theme), default=Theme.DARK, nullable=False)
+    theme = Column(SQLEnum(Theme), default=Theme.LIGHT, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
 

@@ -72,3 +72,9 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient().getInstance();
+
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (!axios.isAxiosError<{ detail?: unknown }>(error)) return fallback;
+  const detail = error.response?.data?.detail;
+  return typeof detail === 'string' ? detail : fallback;
+}

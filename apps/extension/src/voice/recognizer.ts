@@ -47,7 +47,6 @@ export function classifyError(code: string): VoiceError {
 export class Recognizer {
   private rec: SpeechRecognitionLike | null = null;
   private heard = '';
-  private delivered = false;
   private errored = false;
 
   constructor(private readonly events: RecognizerEvents) {}
@@ -62,10 +61,10 @@ export class Recognizer {
     this.stop();
     const rec = new C();
     rec.lang = lang;
-    rec.continuous = false;
+    rec.continuous = true;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
-    this.heard = ''; this.delivered = false; this.errored = false;
+    this.heard = ''; this.errored = false;
 
     rec.onstart = () => this.events.onStart();
     rec.onresult = (e) => {
@@ -76,12 +75,11 @@ export class Recognizer {
         (r.isFinal ? (final += r[0].transcript) : (interim += r[0].transcript));
       }
       if (interim) { this.heard = interim; this.events.onInterim(interim.trim()); }
-      if (final.trim()) { this.heard = final; this.delivered = true; this.events.onFinal(final.trim()); }
+      if (final.trim()) { this.heard = ''; this.events.onFinal(final.trim()); }
     };
     rec.onerror = (e) => { this.errored = true; this.events.onError(classifyError(e.error), e.error); };
     rec.onend = () => {
-      // Chrome sometimes ends without a final result; salvage what we heard.
-      if (!this.delivered && !this.errored && this.heard.trim()) this.events.onFinal(this.heard.trim());
+      if (!this.errored && this.heard.trim()) this.events.onFinal(this.heard.trim());
       this.rec = null;
       this.events.onEnd();
     };

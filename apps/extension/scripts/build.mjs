@@ -31,7 +31,7 @@ const jobs = [
   // UI pages
   {
     ...common, base: './', plugins: [react()], publicDir: path.join(root, 'public'),
-    build: buildOpts({ rollupOptions: { input: { sidepanel: path.join(root, 'sidepanel.html'), permission: path.join(root, 'permission.html') } } }),
+      build: buildOpts({ rolldownOptions: { input: { sidepanel: path.join(root, 'sidepanel.html'), permission: path.join(root, 'permission.html') } } }),
   },
   // Content script: must be a single self-contained classic script (no imports)
   {
@@ -43,7 +43,7 @@ const jobs = [
     ...common, publicDir: false,
     build: buildOpts({
       lib: { entry: path.join(root, 'src/background/service-worker.ts'), formats: ['es'], fileName: () => 'background.js' },
-      rollupOptions: { output: { inlineDynamicImports: true } },
+      rolldownOptions: { output: { codeSplitting: false } },
     }),
   },
 ];

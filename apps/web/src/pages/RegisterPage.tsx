@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { getApiErrorMessage } from '@/api/client';
 import { RegisterData } from '@/types';
 
 const RegisterPage = () => {
@@ -33,8 +34,8 @@ const RegisterPage = () => {
     try {
       const data: RegisterData = { name, email, password };
       await register(data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Registration failed. Please try again.'));
     } finally {
       setIsLoading(false);
     }

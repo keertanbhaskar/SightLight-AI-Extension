@@ -54,7 +54,7 @@ const VERBS =
   'click|tap|press|hit|type|enter|input|write|fill|search|scroll|go|open|visit|navigate|wait|select|choose|submit|reload|refresh|find|locate|google|look';
 
 const FIELD_NOUNS =
-  /\b(box|field|bar|input|textbox|text box|search|email|e-mail|password|username|user name|name|phone|address|area|textarea|comment|message|query|subject|title|url|zip|code|city)\b/i;
+  /\b(box|field|bar|input|textbox|text box|search|búsqueda|busqueda|recherche|suchfeld|email|e-mail|correo electrónico|correo electronico|courriel|password|username|user name|name|phone|address|area|textarea|comment|message|query|subject|title|url|zip|code|city)\b/i;
 
 const KEY_MAP: Record<string, string> = {
   enter: 'Enter', return: 'Enter', escape: 'Escape', esc: 'Escape', tab: 'Tab',
@@ -136,6 +136,31 @@ const HINDI_COMMANDS: Array<[string, string]> = [
   ['स्क्रॉल करें', 'scroll'],
 ];
 
+const INTERNATIONAL_COMMANDS: Array<[RegExp, string]> = [
+  [/^(?:haz|haga|hacer)\s+clic\s+en\s+(?:el|la)\s+/iu, 'click the '],
+  [/^(?:pulsa|pulse|presiona|presione)\s+(?:el|la)\s+/iu, 'click the '],
+  [/^(?:clique|cliquez)\s+sur\s+(?:le|la|l['’])\s*/iu, 'click the '],
+  [/^(?:clique|cliquez)\s+(?:le|la)\s+/iu, 'click the '],
+  [/^(?:klicke|klicken|klick)\s+auf\s+(?:den|die|das|der)\s+/iu, 'click the '],
+  [/\b(?:clickea|cliquea|clica|pulsa|pulse|presiona|presione|appuie|appuyez|drücke|druecke)\b/giu, 'click'],
+  [/\b(?:ve|vaya|ir)\s+a\s+/giu, 'go to '],
+  [/\b(?:va|allez|aller)\s+(?:à|a)\s+/giu, 'go to '],
+  [/\b(?:gehe|geh|gehen)\s+zu\s+/giu, 'go to '],
+  [/\b(?:abre|abra|abrir|ouvre|ouvrez|ouvrir|öffne|oeffne|öffnen|oeffnen)\b/giu, 'open'],
+  [/^(?:busca|busque|buscar)\b/iu, 'search for'],
+  [/^(?:cherche|cherchez|recherche|recherchez|rechercher)\b/iu, 'search for'],
+  [/^(?:suche|suchen|sucht)\s+nach\b/iu, 'search for'],
+  [/\b(?:escribe|escriba|escribir|écris|ecris|écrivez|ecrivez|tape|tapez|schreibe|schreib|schreiben)\b/giu, 'type'],
+  [/^(?:sube|desplaza|desplázate|desplazate)\s+(?:por\s+)?(?:la\s+)?página\s+(?:hacia\s+)?arriba$/iu, 'scroll up'],
+  [/^(?:baja|desplaza|desplázate|desplazate)\s+(?:por\s+)?(?:la\s+)?página\s+(?:hacia\s+)?abajo$/iu, 'scroll down'],
+  [/^(?:fais|faites)\s+défiler\s+(?:la\s+page\s+)?vers\s+le\s+haut$/iu, 'scroll up'],
+  [/^(?:fais|faites)\s+défiler\s+(?:la\s+page\s+)?vers\s+le\s+bas$/iu, 'scroll down'],
+  [/^(?:scrolle|scroll|rolle)\s+(?:(?:die\s+)?seite\s+)?nach\s+oben$/iu, 'scroll up'],
+  [/^(?:scrolle|scroll|rolle)\s+(?:(?:die\s+)?seite\s+)?nach\s+unten$/iu, 'scroll down'],
+  [/\b(?:en|sur|auf)\s+(?=(?:google|youtube|amazon|wikipedia|github|bing|reddit)\b)/giu, 'on '],
+  [/\b(search for)\s+(?:the|el|la|los|las|un|una|unos|unas|des|du|de la|le|les|der|die|das|ein|eine|einen|einem)\s+/giu, '$1 '],
+];
+
 const KANNADA_TEXT_ALIASES: Record<string, string> = {
   ಬಿಬಿಸಿ: 'bbc',
   BBC: 'bbc',
@@ -160,7 +185,38 @@ const HINDI_TEXT_ALIASES: Record<string, string> = {
   जीमेल: 'gmail',
 };
 
-function translateKannadaCommands(input: string): string {
+const INTERNATIONAL_TEXT_ALIASES: Array<[string, string]> = [
+  ["page d'accueil", 'home'],
+  ['página principal', 'home'],
+  ['pagina principal', 'home'],
+  ['página de inicio', 'home'],
+  ['pagina de inicio', 'home'],
+  ['startseite', 'home'],
+  ['accueil', 'home'],
+  ['inicio', 'home'],
+  ['d’accueil', 'home'],
+  ["d'accueil", 'home'],
+  ['anmelden', 'login'],
+  ['connexion', 'login'],
+  ['conexión', 'login'],
+  ['conexion', 'login'],
+  ['iniciar sesión', 'login'],
+  ['iniciar sesion', 'login'],
+  ['schaltfläche', 'button'],
+  ['schaltflaeche', 'button'],
+  ['búsqueda', 'search'],
+  ['busqueda', 'search'],
+  ['recherche', 'search'],
+  ['suchfeld', 'search'],
+  ['botón', 'button'],
+  ['boton', 'button'],
+  ['bouton', 'button'],
+  ['correo electrónico', 'email'],
+  ['correo electronico', 'email'],
+  ['courriel', 'email'],
+];
+
+function translateSupportedLanguages(input: string): string {
   let s = input.trim().replace(/[\u200b\u200c\u200d]/g, '');
   s = s
     .replace(/^ವೆಬ್(?:‌)?ನಲ್ಲಿ\s+(.+?)\s+(?:ಹುಡುಕಿ|ಹುಡುಕಾಡಿ)$/i, 'search web for $1')
@@ -173,6 +229,16 @@ function translateKannadaCommands(input: string): string {
     /^(?:ಪುಟ(?:ವನ್ನು)?|ಸ್ಕ್ರೀನ್|page|screen)(?:\s+(?:ನ್ನು|ಅನ್ನು))?\s+(ಮೇಲೆ|ಮೇಲಕ್ಕೆ|ಕೆಳಗೆ|ಕೆಳಕ್ಕೆ)(?:\s+(?:ಸ್ಕ್ರೋಲ್|scroll))?\s+(?:ಮಾಡಿ|ಮಾಡು|ಮಾಡಿರಿ)$/u,
     (_match, direction: string) => `scroll ${/ಮೇಲೆ|ಮೇಲಕ್ಕೆ/.test(direction) ? 'up' : 'down'}`,
   );
+  for (const [pattern, replacement] of INTERNATIONAL_COMMANDS) s = s.replace(pattern, replacement);
+
+  s = s
+    .replace(/^(?:vuelve|regresa)\s+atrás$/iu, 'go back')
+    .replace(/^retourne\s+en\s+arrière$/iu, 'go back')
+    .replace(/^geh(?:e)?\s+zurück$/iu, 'go back')
+    .replace(/^(?:recarga|actualiza)\s+(?:la\s+)?página$/iu, 'reload page')
+    .replace(/^(?:recharge|actualise)\s+(?:la\s+)?page$/iu, 'reload page')
+    .replace(/^(?:lade\s+neu|aktualisiere)\s+(?:die\s+)?seite$/iu, 'reload page');
+
   const ordered = [...KANNADA_COMMANDS].sort((a, b) => b[0].length - a[0].length);
   for (const [from, to] of ordered) {
     const pattern = new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
@@ -195,6 +261,12 @@ function translateKannadaCommands(input: string): string {
     s = s.replace(pattern, to);
   }
 
+  for (const [from, to] of [...INTERNATIONAL_TEXT_ALIASES].sort((a, b) => b[0].length - a[0].length)) {
+    const pattern = new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
+    s = s.replace(pattern, to);
+  }
+
+  s = s.replace(/\bbutton\s+(?:(?:de|del|of)\s+)?(home|login)\b/giu, '$1 button');
   s = s.replace(/^(.+?)\s+(?:(?:पर|पे|को)\s+)?(click|press|tap|hit)$/i, '$2 $1');
   s = s.replace(/\b(?:ಮಾಡಿ|ಮಾಡು|ಮಾಡುತ್ತೇನೆ|ದಯವಿಟ್ಟು|ಇಲ್ಲಿ|ಈಗ|ನಾನು|ನೀವು)\b/gi, ' ');
   s = s.replace(/(\p{L})(?:ಗೆ|ಗೇ|ನಲ್ಲಿ|ಮೇಲೆ|ಮಧ್ಯೆ|ಮೂಲಕ|ಇಂದ|ವರೆಗೆ|ವರೆಗೂ|ಅಲ್ಲಿ)(?=$|[\s.,!?])/gu, '$1');
@@ -228,7 +300,7 @@ const restore = (s: string, quotes: string[]) =>
 
 /** Clean a raw typed or spoken instruction. Exported for tests and the voice UI. */
 export function normalizeInstruction(raw: string): string {
-  let s = translateKannadaCommands(raw).replace(/\s+/g, ' ').trim();
+  let s = translateSupportedLanguages(raw).replace(/\s+/g, ' ').trim();
   s = s.replace(/^(?:hey|ok|okay)[, ]+(?:sight\s?lite|assistant|browser)[,:]?\s*/i, '');
   // politeness / filler prefixes, applied repeatedly ("hey, can you please ...")
   const prefix =
@@ -308,7 +380,10 @@ function cleanTarget(t: string): string {
 
 /** "email field" -> "email": generic container nouns never appear in the page's own labels. */
 function stripFieldNoun(t: string): string {
-  const normalized = t.replace(/^(?:(?:enter|type|write|fill)\s+)?(?:your|my|the)\s+/i, '');
+  let normalized = t.replace(/^(?:(?:enter|type|write|fill|escriba|escribe|schreibe)\s+)?(?:your|my|the|el|la|los|las|un|una|le|les|der|die|das|ein|eine)\s+/iu, '');
+  normalized = normalized.replace(/^(?:caja de búsqueda|caja de busqueda|campo de búsqueda|boîte de recherche|boite de recherche|champ de recherche|suchfeld)$/iu, 'search');
+  normalized = normalized.replace(/^(?:(?:caja|campo|champ|boîte|boite)\s+de\s+)?search$/iu, 'search');
+  normalized = normalized.replace(/^(?:correo electrónico|correo electronico|courriel|e-mail)$/iu, 'email');
   const stripped = normalized.replace(/\s+(?:field|box|input|textbox|text box|text area|textarea|area|bar)$/i, '').trim();
   return stripped || normalized || t;
 }
@@ -472,7 +547,7 @@ function parseClause(clause: string, quotes: string[]): Step | null {
 
 /** "hello world into the search box" -> { text: "hello world", target: "the search box" } */
 function splitTypePayload(payload: string, quotes: string[]): { text: string; target?: string } {
-  const prep = /\s+(?:in|into|on|inside|to)\s+/gi;
+  const prep = /\s+(?:in|into|on|inside|to|en|dans|im|ins)\s+/gi;
   const hits: Array<{ idx: number; len: number }> = [];
   for (let m = prep.exec(payload); m; m = prep.exec(payload)) hits.push({ idx: m.index, len: m[0].length });
   const quoted = QUOTE_RE.test(payload);

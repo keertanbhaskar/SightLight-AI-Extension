@@ -3,6 +3,24 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+    --color-bg: 248 250 252;
+    --color-surface: 255 255 255;
+    --color-border: 226 232 240;
+    --color-text: 23 23 23;
+    --color-muted: 100 116 139;
+  }
+
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+    --color-bg: 10 10 10;
+    --color-surface: 18 18 18;
+    --color-border: 31 31 31;
+    --color-text: 229 229 229;
+    --color-muted: 115 115 115;
+  }
+
   body {
     @apply bg-dark-bg text-dark-text;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
