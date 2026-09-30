@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SightLite – Microphone access</title>
+    <style>
+      body { font: 16px/1.5 system-ui, sans-serif; max-width: 460px; margin: 12vh auto; padding: 0 24px; color: #e5e7eb; background: #0b0f17; }
+      h1 { font-size: 20px; } button { font: inherit; padding: 10px 18px; border-radius: 8px; border: 0; background: #22c55e; color: #052e16; cursor: pointer; }
+      #status { margin-top: 18px; } .ok { color: #4ade80; } .err { color: #f87171; } small { color: #9ca3af; }
+    </style>
+  </head>
+  <body>
+    <h1>Enable voice commands</h1>
+    <p>SightLite needs microphone access to hear your commands. Select Allow microphone to grant access in your browser.</p>
+    <button id="grant">Allow microphone</button>
+    <p id="status" role="status" aria-live="polite"></p>
+    <p><small>Speech recognition is provided by your browser and may send audio to its speech service. SightLite itself never records or stores audio.</small></p>
+    <script type="module" src="/src/permission/permission.ts"></script>
+  </body>
+</html>
