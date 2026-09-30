@@ -21,7 +21,7 @@ from app.core.security import (
 class AuthService:
     """Service for authentication operations."""
 
-    @staticmethod
+    
     @staticmethod
     async def register_user(db: AsyncSession, user_data: UserRegister) -> User:
         """Register a new user."""
