@@ -54,8 +54,13 @@ def do_run_migrations(connection: Connection) -> None:
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode."""
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
-    
+    database_url = settings.DATABASE_URL
+
+    if "sslmode=" in database_url:
+        database_url = database_url.replace("sslmode=require", "ssl=require")
+
+    configuration["sqlalchemy.url"] = database_url
+
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",
